@@ -1,0 +1,124 @@
+setwd("C:\\Users\\royag\\Documents\\R");
+
+
+library(caret)
+library(ggplot2)
+library(gplots)
+library(rattle)
+library(randomForest)
+
+# reading data
+train<- read.csv("pml-training.csv", head=TRUE);
+test<- read.csv("pml-testing.csv", head=TRUE);
+
+# Divided the training data to two sub samples; Cross validation 
+inTrain <- createDataPartition(y=train$classe, p=0.6, list=FALSE)
+training <- train[inTrain, ]
+testing <- train[-inTrain, ]
+dim(training)
+dim(testing)
+
+
+# finding near zero variable 
+NZV <- nearZeroVar(training, saveMetrics=FALSE, names = TRUE, foreach = FALSE, allowParallel = TRUE)
+
+print(NZV)
+
+# remove near zero variable
+NZVvars <- names(train) %in% c("new_window","kurtosis_roll_belt"    ,  "kurtosis_picth_belt",    
+                                      "kurtosis_yaw_belt"      , "skewness_roll_belt"  ,    "skewness_roll_belt.1" ,
+                                      "skewness_yaw_belt" ,      "max_yaw_belt" ,           "min_yaw_belt" ,          
+                                      "amplitude_yaw_belt" ,     "avg_roll_arm"  ,          "stddev_roll_arm" ,       
+                                      "var_roll_arm"   ,         "avg_pitch_arm" ,          "stddev_pitch_arm" ,      
+                                      "var_pitch_arm"   ,        "avg_yaw_arm"  ,           "stddev_yaw_arm"  ,       
+                                      "var_yaw_arm"    ,         "kurtosis_roll_arm"  ,     "kurtosis_picth_arm" ,    
+                                      "kurtosis_yaw_arm" ,       "skewness_roll_arm"  ,     "skewness_pitch_arm" ,    
+                                      "skewness_yaw_arm"  ,      "amplitude_roll_arm"  ,    "kurtosis_roll_dumbbell", 
+                                      "kurtosis_picth_dumbbell", "kurtosis_yaw_dumbbell",  "skewness_roll_dumbbell" ,
+                                      "skewness_pitch_dumbbell", "skewness_yaw_dumbbell" ,  "max_yaw_dumbbell"  ,     
+                                      "min_yaw_dumbbell"   ,     "amplitude_yaw_dumbbell" , "kurtosis_roll_forearm" , 
+                                      "kurtosis_picth_forearm" , "kurtosis_yaw_forearm" ,   "skewness_roll_forearm" , 
+                                      "skewness_pitch_forearm" , "skewness_yaw_forearm" ,   "max_roll_forearm"   ,    
+                                      "max_yaw_forearm"   ,      "min_yaw_forearm"     ,    "amplitude_yaw_forearm" , 
+                                      "avg_roll_forearm"  ,      "stddev_roll_forearm" ,    "var_roll_forearm"    ,   
+                                      "avg_pitch_forearm"  ,     "stddev_pitch_forearm" ,   "var_pitch_forearm" ,     
+                                      "avg_yaw_forearm"     ,    "stddev_yaw_forearm"   ,   "var_yaw_forearm" )
+
+training <- training[!NZVvars]
+
+
+training <- training[c(-1)]
+
+#Cleaning Variables with having more than 60% NAs
+training1 <- training 
+ for(i in 1:length(training)) {
+  if( sum( is.na( training[, i] ) ) /nrow(training) >= .6 ) {
+     for(j in 1:length(training1)) {
+       if( length( grep(names(training[i]), names(training1)[j]) ) ==1) {
+         training1 <- training1[ , -j]
+           }   
+         } 
+     }
+ }
+
+training <- training1
+rm(training1)
+
+# set the same transformation for test and testing datasets 
+X1 <- colnames(training)
+X2 <- colnames(training[, -58]) 
+testing <- testing[X1]
+test <- test[X2]
+
+dim(testing)
+dim(test)
+
+
+# checking the % of NA in data set
+paste0("% NA after ... ", sum(is.na(training))/prod(dim(training)))
+
+
+
+
+# coerce the data into the same type
+class(testing)
+class(training)
+
+for (i in 1:length(test) ) {
+  for(j in 1:length(training)) {
+    if( length( grep(names(training[i]), names(test)[j]) ) ==1)  {
+      class(test[j]) <- class(training[i])
+    }      
+  }      
+}
+
+test <- rbind(training[2, -58] , test) 
+test <- test[-1,]
+
+
+
+modFit <- rpart(classe ~. , data=training,method="class")
+
+fancyRpartPlot(modFit)
+
+
+predict1 <- predict(modFit, testing , type="class")
+
+confusionMatrix(predict1, testing$classe)
+
+
+length(predict1)
+length(testing$classe)
+
+
+
+modFit2 <- randomForest(classe ~. , data=training)
+
+predict2 <- predict(modFit2, testing , type="class")
+confusionMatrix(predict2, testing$classe)
+
+
+predictT <- predict(modFit2, test , type="class")
+names(test)
+PredictF <-  data.frame(predictT, test)
+write.csv(PredictF, "Predict.csv")

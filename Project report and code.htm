@@ -1,0 +1,345 @@
+<html>
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta name=Generator content="Microsoft Word 15 (filtered)">
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin-top:0in;
+	margin-right:0in;
+	margin-bottom:8.0pt;
+	margin-left:0in;
+	line-height:107%;
+	font-size:11.0pt;
+	font-family:"Calibri",sans-serif;}
+.MsoChpDefault
+	{font-family:"Calibri",sans-serif;}
+.MsoPapDefault
+	{margin-bottom:8.0pt;
+	line-height:107%;}
+@page WordSection1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.0in 1.0in 1.0in;}
+div.WordSection1
+	{page:WordSection1;}
+-->
+</style>
+
+</head>
+
+<body lang=EN-US>
+
+<div class=WordSection1>
+
+<p class=MsoNormal>Project report and code</p>
+
+<p class=MsoNormal>I explained my work through the comments in the codes </p>
+
+<p class=MsoNormal># define direction and call the libraries </p>
+
+<p class=MsoNormal>setwd(&quot;C:\\Users\\royag\\Documents\\R&quot;);</p>
+
+<p class=MsoNormal>library(caret)</p>
+
+<p class=MsoNormal>library(ggplot2)</p>
+
+<p class=MsoNormal>library(gplots)</p>
+
+<p class=MsoNormal>library(rattle)</p>
+
+<p class=MsoNormal>library(randomForest)</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal># reading data</p>
+
+<p class=MsoNormal>train&lt;- read.csv(&quot;pml-training.csv&quot;,
+head=TRUE);</p>
+
+<p class=MsoNormal>test&lt;- read.csv(&quot;pml-testing.csv&quot;, head=TRUE);</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal># Divided the training data to two sub samples; Cross
+validation </p>
+
+<p class=MsoNormal>#The expected out-of-sample error will correspond to accuracy
+in the cross-validation data.</p>
+
+<p class=MsoNormal># Accuracy is the proportion of correct classified
+observation over the total sample in the sub testing data set. </p>
+
+<p class=MsoNormal>#Expected accuracy is the expected accuracy in the
+out-of-sample data set.</p>
+
+<p class=MsoNormal>inTrain &lt;- createDataPartition(y=train$classe, p=0.6,
+list=FALSE)</p>
+
+<p class=MsoNormal>training &lt;- train[inTrain, ]</p>
+
+<p class=MsoNormal>testing &lt;- train[-inTrain, ]</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal># finding near zero variable </p>
+
+<p class=MsoNormal>NZV &lt;- nearZeroVar(training, saveMetrics=FALSE, names =
+TRUE, foreach = FALSE, allowParallel = TRUE)</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>print(NZV)</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal># remove near zero variable</p>
+
+<p class=MsoNormal>NZVvars &lt;- names(train) %in%
+c(&quot;new_window&quot;,&quot;kurtosis_roll_belt&quot;    , 
+&quot;kurtosis_picth_belt&quot;,    </p>
+
+<p class=MsoNormal>                                     
+&quot;kurtosis_yaw_belt&quot;      , &quot;skewness_roll_belt&quot;  ,   
+&quot;skewness_roll_belt.1&quot; ,</p>
+
+<p class=MsoNormal>                                     
+&quot;skewness_yaw_belt&quot; ,      &quot;max_yaw_belt&quot; ,          
+&quot;min_yaw_belt&quot; ,          </p>
+
+<p class=MsoNormal>                                      &quot;amplitude_yaw_belt&quot;
+,     &quot;avg_roll_arm&quot;  ,          &quot;stddev_roll_arm&quot; ,       </p>
+
+<p class=MsoNormal>                                     
+&quot;var_roll_arm&quot;   ,         &quot;avg_pitch_arm&quot; ,         
+&quot;stddev_pitch_arm&quot; ,      </p>
+
+<p class=MsoNormal>                                      &quot;var_pitch_arm&quot;  
+,        &quot;avg_yaw_arm&quot;  ,           &quot;stddev_yaw_arm&quot; 
+,       </p>
+
+<p class=MsoNormal>                                     
+&quot;var_yaw_arm&quot;    ,         &quot;kurtosis_roll_arm&quot;  ,    
+&quot;kurtosis_picth_arm&quot; ,    </p>
+
+<p class=MsoNormal>                                      &quot;kurtosis_yaw_arm&quot;
+,       &quot;skewness_roll_arm&quot;  ,     &quot;skewness_pitch_arm&quot;
+,    </p>
+
+<p class=MsoNormal>                                     
+&quot;skewness_yaw_arm&quot;  ,      &quot;amplitude_roll_arm&quot;  ,   
+&quot;kurtosis_roll_dumbbell&quot;, </p>
+
+<p class=MsoNormal>                                     
+&quot;kurtosis_picth_dumbbell&quot;, &quot;kurtosis_yaw_dumbbell&quot;, 
+&quot;skewness_roll_dumbbell&quot; ,</p>
+
+<p class=MsoNormal>                                     
+&quot;skewness_pitch_dumbbell&quot;, &quot;skewness_yaw_dumbbell&quot; , 
+&quot;max_yaw_dumbbell&quot;  ,     </p>
+
+<p class=MsoNormal>                                     
+&quot;min_yaw_dumbbell&quot;   ,     &quot;amplitude_yaw_dumbbell&quot; ,
+&quot;kurtosis_roll_forearm&quot; , </p>
+
+<p class=MsoNormal>                                     
+&quot;kurtosis_picth_forearm&quot; , &quot;kurtosis_yaw_forearm&quot; ,  
+&quot;skewness_roll_forearm&quot; , </p>
+
+<p class=MsoNormal>                                     
+&quot;skewness_pitch_forearm&quot; , &quot;skewness_yaw_forearm&quot; ,  
+&quot;max_roll_forearm&quot;   ,    </p>
+
+<p class=MsoNormal>                                     
+&quot;max_yaw_forearm&quot;   ,      &quot;min_yaw_forearm&quot;     ,   
+&quot;amplitude_yaw_forearm&quot; , </p>
+
+<p class=MsoNormal>                                     
+&quot;avg_roll_forearm&quot;  ,      &quot;stddev_roll_forearm&quot; ,   
+&quot;var_roll_forearm&quot;    ,   </p>
+
+<p class=MsoNormal>                                     
+&quot;avg_pitch_forearm&quot;  ,     &quot;stddev_pitch_forearm&quot; ,  
+&quot;var_pitch_forearm&quot; ,     </p>
+
+<p class=MsoNormal>                                     
+&quot;avg_yaw_forearm&quot;     ,    &quot;stddev_yaw_forearm&quot;   ,  
+&quot;var_yaw_forearm&quot; )</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>training &lt;- training[!NZVvars]</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>training &lt;- training[c(-1)]</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>#Cleaning Variables with having more than 60% NAs</p>
+
+<p class=MsoNormal>training1 &lt;- training </p>
+
+<p class=MsoNormal> for(i in 1:length(training)) {</p>
+
+<p class=MsoNormal>  if( sum( is.na( training[, i] ) ) /nrow(training) &gt;= .6
+) {</p>
+
+<p class=MsoNormal>     for(j in 1:length(training1)) {</p>
+
+<p class=MsoNormal>       if( length( grep(names(training[i]),
+names(training1)[j]) ) ==1) {</p>
+
+<p class=MsoNormal>         training1 &lt;- training1[ , -j]</p>
+
+<p class=MsoNormal>           }   </p>
+
+<p class=MsoNormal>         } </p>
+
+<p class=MsoNormal>     }</p>
+
+<p class=MsoNormal> }</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>training &lt;- training1</p>
+
+<p class=MsoNormal>rm(training1)</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal># set the same transformation for test and testing datasets </p>
+
+<p class=MsoNormal>X1 &lt;- colnames(training)</p>
+
+<p class=MsoNormal>X2 &lt;- colnames(training[, -58]) </p>
+
+<p class=MsoNormal>testing &lt;- testing[X1]</p>
+
+<p class=MsoNormal>test &lt;- test[X2]</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal># checking the % of NA in data set</p>
+
+<p class=MsoNormal>paste0(&quot;% NA after ... &quot;,
+sum(is.na(training))/prod(dim(training)))</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal># coerce the data into the same type</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>for (i in 1:length(test) ) {</p>
+
+<p class=MsoNormal>  for(j in 1:length(training)) {</p>
+
+<p class=MsoNormal>    if( length( grep(names(training[i]), names(test)[j]) )
+==1)  {</p>
+
+<p class=MsoNormal>      class(test[j]) &lt;- class(training[i])</p>
+
+<p class=MsoNormal>    }      </p>
+
+<p class=MsoNormal>  }      </p>
+
+<p class=MsoNormal>}</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>test &lt;- rbind(training[2, -58] , test) </p>
+
+<p class=MsoNormal>test &lt;- test[-1,]</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>#Using recursive partitioning for classification</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>modFit &lt;- rpart(classe ~. ,
+data=training,method=&quot;class&quot;)</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>fancyRpartPlot(modFit)</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>predict1 &lt;- predict(modFit, testing ,
+type=&quot;class&quot;)</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal># for checking accuracy of the method </p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>confusionMatrix(predict1, testing$classe)</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal># using random forest method</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>modFit2 &lt;- randomForest(classe ~. , data=training)</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>predict2 &lt;- predict(modFit2, testing ,
+type=&quot;class&quot;)</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal># for checking accuracy of the random forest method </p>
+
+<p class=MsoNormal>confusionMatrix(predict2, testing$classe)</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal># predict a new data and saving final file</p>
+
+<p class=MsoNormal>predictT &lt;- predict(modFit2, test ,
+type=&quot;class&quot;)</p>
+
+<p class=MsoNormal>names(test)</p>
+
+<p class=MsoNormal>PredictF &lt;-  data.frame(predictT, test)</p>
+
+<p class=MsoNormal>write.csv(PredictF, &quot;Predict.csv&quot;)</p>
+
+</div>
+
+</body>
+
+</html>
