@@ -1,5 +1,9 @@
+
+# setting direction
+
 setwd("C:\\Users\\royag\\Documents\\R");
 
+# install library
 
 library(caret)
 library(ggplot2)
@@ -15,8 +19,6 @@ test<- read.csv("pml-testing.csv", head=TRUE);
 inTrain <- createDataPartition(y=train$classe, p=0.6, list=FALSE)
 training <- train[inTrain, ]
 testing <- train[-inTrain, ]
-dim(training)
-dim(testing)
 
 
 # finding near zero variable 
@@ -70,8 +72,6 @@ X2 <- colnames(training[, -58])
 testing <- testing[X1]
 test <- test[X2]
 
-dim(testing)
-dim(test)
 
 
 # checking the % of NA in data set
@@ -81,8 +81,6 @@ paste0("% NA after ... ", sum(is.na(training))/prod(dim(training)))
 
 
 # coerce the data into the same type
-class(testing)
-class(training)
 
 for (i in 1:length(test) ) {
   for(j in 1:length(training)) {
@@ -97,28 +95,23 @@ test <- test[-1,]
 
 
 
-modFit <- rpart(classe ~. , data=training,method="class")
-
-fancyRpartPlot(modFit)
-
-
-predict1 <- predict(modFit, testing , type="class")
-
-confusionMatrix(predict1, testing$classe)
-
-
-length(predict1)
-length(testing$classe)
-
-
+# using random forest method
 
 modFit2 <- randomForest(classe ~. , data=training)
 
 predict2 <- predict(modFit2, testing , type="class")
+
+# for checking accuracy of the random forest method 
 confusionMatrix(predict2, testing$classe)
 
 
+# predict a new data and saving final file
 predictT <- predict(modFit2, test , type="class")
 names(test)
 PredictF <-  data.frame(predictT, test)
 write.csv(PredictF, "Predict.csv")
+
+# Accuracy is over 99 % 
+# sample error is about 1%
+
+
